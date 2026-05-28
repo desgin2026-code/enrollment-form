@@ -394,12 +394,45 @@ function loadGroups() {
       sel.appendChild(opt);
     });
   }
+  // إضافة event listener على الصف
+  const gradeEl = document.getElementById('sGrade');
+  gradeEl.onchange = function() {
+    filterGroupsByGrade(this.value);
+    // إلغاء اختيار المجموعة لو غيّر الصف
+    document.getElementById('sGroupId').value = '';
+    document.getElementById('sGroupName').value = '';
+    document.querySelectorAll('.group-card').forEach(c => c.classList.remove('selected'));
+  };
+  // عرض رسالة الانتظار في الأول
+  showGroupsPlaceholder();
+}
+
+function showGroupsPlaceholder() {
+  document.getElementById('groupsContainer').innerHTML = `
+    <div style="color:var(--txt3);font-size:.85rem;padding:14px;background:rgba(7,17,31,.5);border:1.5px dashed var(--border);border-radius:10px;text-align:center;">
+      👆 اختر الصف الدراسي أولاً لتظهر المجموعات المتاحة
+    </div>`;
+}
+
+function filterGroupsByGrade(grade) {
+  const container = document.getElementById('groupsContainer');
+  if (!grade) { showGroupsPlaceholder(); return; }
+
+  const filtered = DB.groups.filter(g => g.grade === grade);
+
+  if (!filtered.length) {
+    container.innerHTML = `<div style="color:var(--txt3);font-size:.85rem;padding:14px;background:rgba(7,17,31,.5);border:1.5px dashed var(--border);border-radius:10px;text-align:center;">
+      لا توجد مجموعات لهذا الصف حالياً — تواصل مع السنتر
+    </div>`;
+    return;
+  }
+
   container.innerHTML = `<div class="groups-grid">${
-    DB.groups.map(g => `
+    filtered.map(g => `
       <div class="group-card" onclick="selectGroup('${g.id}','${esc(g.name)}',this)" data-gid="${g.id}">
         <div class="group-card-check">✓</div>
         <div class="group-name">${g.name}</div>
-        <div class="group-detail">${g.grade||''} ${g.days||g.schedule||''}</div>
+        <div class="group-detail">${g.days||g.schedule||''}</div>
         ${g.fee?`<div style="font-size:.7rem;color:var(--gold3);margin-top:4px;">💰 ${g.fee} جنيه</div>`:''}
       </div>`).join('')
   }</div>`;
